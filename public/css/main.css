@@ -1,0 +1,24 @@
+body {
+    margin: 2rem auto;
+    max-width: 960px;
+    font-family: system-ui, sans-serif;
+    line-height: 1.4;
+}
+
+button {
+    min-width: 9rem;
+    padding: 0.5rem 0.75rem;
+}
+
+#status {
+    margin-left: 0.75rem;
+    color: #444;
+}
+
+video {
+    display: block;
+    width: 100%;
+    max-height: 540px;
+    margin-top: 1rem;
+    background: #111;
+}
