@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rust FFmpeg Realtime to Browser</title>
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+  <body>
+    <h1>Rust FFmpeg Realtime to Browser</h1>
+
+    <button id="start-session">Start WebTransport</button>
+    <span id="status">Idle</span>
+
+    <canvas id="video-canvas"></canvas>
+
+    <dl id="stats">
+      <dt>Video frames</dt>
+      <dd id="video-frames">0</dd>
+      <dt>Audio frames</dt>
+      <dd id="audio-frames">0</dd>
+      <dt>Bytes</dt>
+      <dd id="bytes">0</dd>
+      <dt>Last PTS</dt>
+      <dd id="last-pts">-</dd>
+    </dl>
+
+    <script src="/js/webtransport.js"></script>
+  </body>
+</html>

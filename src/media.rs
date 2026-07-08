@@ -73,7 +73,7 @@ pub(crate) fn dry_run_media_file(input: &str) -> Result<()> {
     Ok(())
 }
 
-struct MediaReader {
+pub(crate) struct MediaReader {
     ictx: format::context::Input,
     video: Option<VideoTranscoder>,
     audio: Option<AudioTranscoder>,
@@ -82,7 +82,7 @@ struct MediaReader {
 }
 
 impl MediaReader {
-    fn open(input: &str) -> Result<Self> {
+    pub(crate) fn open(input: &str) -> Result<Self> {
         let ictx = format::input(input).with_context(|| format!("failed to open {input}"))?;
         let mut reader = Self {
             ictx,
@@ -109,7 +109,7 @@ impl MediaReader {
         Ok(reader)
     }
 
-    fn next_batch(&mut self) -> Result<Option<EncodedBatch>> {
+    pub(crate) fn next_batch(&mut self) -> Result<Option<EncodedBatch>> {
         loop {
             let Some((stream, mut packet)) = self.ictx.packets().next() else {
                 return Ok(None);
@@ -128,7 +128,7 @@ impl MediaReader {
         }
     }
 
-    fn finish(&mut self) -> Result<(Vec<EncodedSample>, Vec<EncodedSample>)> {
+    pub(crate) fn finish(&mut self) -> Result<(Vec<EncodedSample>, Vec<EncodedSample>)> {
         let video_samples = match self.video.as_mut() {
             Some(video) => video.finish()?,
             None => Vec::new(),
@@ -140,9 +140,15 @@ impl MediaReader {
 
         Ok((video_samples, audio_samples))
     }
+
+    pub(crate) fn video_size(&self) -> Option<(u32, u32)> {
+        self.video
+            .as_ref()
+            .map(|video| (video.encoder.width(), video.encoder.height()))
+    }
 }
 
-enum EncodedBatch {
+pub(crate) enum EncodedBatch {
     Video(Vec<EncodedSample>),
     Audio(Vec<EncodedSample>),
 }
@@ -167,10 +173,10 @@ async fn write_samples(
     Ok(())
 }
 
-struct EncodedSample {
-    pts_us: Option<i64>,
-    duration_us: i64,
-    data: Vec<u8>,
+pub(crate) struct EncodedSample {
+    pub(crate) pts_us: Option<i64>,
+    pub(crate) duration_us: i64,
+    pub(crate) data: Vec<u8>,
 }
 
 struct VideoTranscoder {

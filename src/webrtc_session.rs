@@ -18,6 +18,32 @@ use webrtc::track::track_local::track_local_static_sample::TrackLocalStaticSampl
 
 use crate::media::{AUDIO_SAMPLE_RATE, VIDEO_CLOCK_RATE};
 
+pub(crate) struct StaticHttpServer {
+    webtransport_config: Option<String>,
+}
+
+impl StaticHttpServer {
+    pub(crate) fn webtransport(cert_hash: String, port: u16) -> Self {
+        Self {
+            webtransport_config: Some(format!(
+                r#"{{"url":"https://127.0.0.1:{port}/media","serverCertificateHash":{cert_hash}}}"#
+            )),
+        }
+    }
+
+    pub(crate) async fn serve(self) -> Result<()> {
+        let listener = bind_signaling_listener()
+            .await
+            .context("failed to bind HTTP server on 127.0.0.1:3000")?;
+        let config = Arc::new(self.webtransport_config);
+
+        loop {
+            let (stream, _) = listener.accept().await?;
+            handle_static_http_request(stream, Arc::clone(&config)).await?;
+        }
+    }
+}
+
 pub(crate) struct WebRtcSession {
     pub(crate) peer_connection: Arc<RTCPeerConnection>,
     pub(crate) video_track: Arc<TrackLocalStaticSample>,
@@ -124,28 +150,8 @@ async fn handle_http_request(
     let request = read_http_request(&mut stream).await?;
 
     match (request.method.as_str(), request.path.as_str()) {
-        ("GET", "/") | ("GET", "/index.html") => {
-            write_http_response(
-                &mut stream,
-                "200 OK",
-                "text/html; charset=utf-8",
-                INDEX_HTML,
-            )
-            .await?;
-            Ok(false)
-        }
-        ("GET", "/css/main.css") => {
-            write_http_response(&mut stream, "200 OK", "text/css; charset=utf-8", MAIN_CSS).await?;
-            Ok(false)
-        }
-        ("GET", "/js/main.js") => {
-            write_http_response(
-                &mut stream,
-                "200 OK",
-                "application/javascript; charset=utf-8",
-                MAIN_JS,
-            )
-            .await?;
+        ("GET", _) => {
+            write_static_response(&mut stream, &request.path, None).await?;
             Ok(false)
         }
         ("POST", "/offer") => {
@@ -183,6 +189,84 @@ async fn handle_http_request(
             write_http_response(&mut stream, "404 Not Found", "text/plain", "not found").await?;
             Ok(false)
         }
+    }
+}
+
+async fn handle_static_http_request(
+    mut stream: TcpStream,
+    webtransport_config: Arc<Option<String>>,
+) -> Result<()> {
+    let request = read_http_request(&mut stream).await?;
+
+    match request.method.as_str() {
+        "GET" => {
+            write_static_response(
+                &mut stream,
+                &request.path,
+                webtransport_config.as_ref().as_ref(),
+            )
+            .await?;
+        }
+        _ => {
+            write_http_response(
+                &mut stream,
+                "405 Method Not Allowed",
+                "text/plain",
+                "method not allowed",
+            )
+            .await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn write_static_response(
+    stream: &mut TcpStream,
+    path: &str,
+    webtransport_config: Option<&String>,
+) -> Result<()> {
+    match path {
+        "/" | "/index.html" => {
+            write_http_response(stream, "200 OK", "text/html; charset=utf-8", INDEX_HTML).await
+        }
+        "/webtransport.html" => {
+            write_http_response(
+                stream,
+                "200 OK",
+                "text/html; charset=utf-8",
+                WEBTRANSPORT_HTML,
+            )
+            .await
+        }
+        "/css/main.css" => {
+            write_http_response(stream, "200 OK", "text/css; charset=utf-8", MAIN_CSS).await
+        }
+        "/js/webrtc.js" => {
+            write_http_response(
+                stream,
+                "200 OK",
+                "application/javascript; charset=utf-8",
+                MAIN_JS,
+            )
+            .await
+        }
+        "/js/webtransport.js" => {
+            write_http_response(
+                stream,
+                "200 OK",
+                "application/javascript; charset=utf-8",
+                WEBTRANSPORT_JS,
+            )
+            .await
+        }
+        "/webtransport-config" => {
+            let body = webtransport_config
+                .map(String::as_str)
+                .unwrap_or(r#"{"error":"webtransport mode is not running"}"#);
+            write_http_response(stream, "200 OK", "application/json", body).await
+        }
+        _ => write_http_response(stream, "404 Not Found", "text/plain", "not found").await,
     }
 }
 
@@ -359,4 +443,6 @@ fn create_audio_track() -> Arc<TrackLocalStaticSample> {
 
 const INDEX_HTML: &str = include_str!("../public/index.html");
 const MAIN_CSS: &str = include_str!("../public/css/main.css");
-const MAIN_JS: &str = include_str!("../public/js/main.js");
+const MAIN_JS: &str = include_str!("../public/js/webrtc.js");
+const WEBTRANSPORT_HTML: &str = include_str!("../public/webtransport.html");
+const WEBTRANSPORT_JS: &str = include_str!("../public/js/webtransport.js");

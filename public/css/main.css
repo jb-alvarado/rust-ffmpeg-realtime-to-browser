@@ -22,3 +22,27 @@ video {
     margin-top: 1rem;
     background: #111;
 }
+
+#video-canvas {
+    display: block;
+    width: 100%;
+    max-height: 540px;
+    margin-top: 1rem;
+    background: #111;
+}
+
+#stats {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.35rem 1rem;
+    margin-top: 1rem;
+}
+
+#stats dt {
+    color: #555;
+}
+
+#stats dd {
+    margin: 0;
+    font-family: ui-monospace, monospace;
+}

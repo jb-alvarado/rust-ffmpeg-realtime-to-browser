@@ -4,9 +4,11 @@ use ffmpeg_next as ffmpeg;
 mod clock;
 mod media;
 mod webrtc_session;
+mod webtransport_session;
 
 use media::{dry_run_media_file, stream_media_file};
 use webrtc_session::WebRtcSession;
+use webtransport_session::run_webtransport_example;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -17,6 +19,11 @@ async fn main() -> Result<()> {
 
     if args.dry_run {
         dry_run_media_file(&args.input)?;
+        return Ok(());
+    }
+
+    if args.webtransport {
+        run_webtransport_example(&args.input).await?;
         return Ok(());
     }
 
@@ -39,6 +46,7 @@ async fn main() -> Result<()> {
 struct Args {
     input: String,
     dry_run: bool,
+    webtransport: bool,
 }
 
 impl Args {
@@ -55,12 +63,25 @@ impl Args {
             return Ok(Self {
                 input,
                 dry_run: true,
+                webtransport: false,
+            });
+        }
+
+        if first_arg == "--webtransport" {
+            let input = args
+                .next()
+                .ok_or_else(|| anyhow!("usage: cargo run -- --webtransport <input-media-file>"))?;
+            return Ok(Self {
+                input,
+                dry_run: false,
+                webtransport: true,
             });
         }
 
         Ok(Self {
             input: first_arg,
             dry_run: false,
+            webtransport: false,
         })
     }
 }
