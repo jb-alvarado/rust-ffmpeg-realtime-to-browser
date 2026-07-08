@@ -3,8 +3,7 @@
 Minimal Rust example inspired by
 [`ashellunts/ffmpeg-to-webrtc`](https://github.com/ashellunts/ffmpeg-to-webrtc).
 
-The Go original reads an H264 stream produced by FFmpeg and sends it to a browser
-over WebRTC. This version accepts normal media files directly, decodes them with
+This version accepts normal media files directly, decodes them with
 `ffmpeg-next`, transcodes them to browser-friendly codecs, and sends them to the
 browser in realtime over WebRTC or WebTransport:
 
