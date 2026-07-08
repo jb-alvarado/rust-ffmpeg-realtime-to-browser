@@ -1,6 +1,6 @@
 # rust-ffmpeg-realtime-to-browser
 
-Minimal Rust inspired by
+Minimal Rust example inspired by
 [`ashellunts/ffmpeg-to-webrtc`](https://github.com/ashellunts/ffmpeg-to-webrtc).
 
 The Go original reads an H264 stream produced by FFmpeg and sends it to a browser
